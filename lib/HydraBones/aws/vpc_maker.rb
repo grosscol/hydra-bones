@@ -2,7 +2,7 @@ require 'aws-sdk'
 
 
 module HydraBones
-  module AWSSkelton
+  module AWSSkeleton
 
     class VPCExistsError < StandardError
     end
@@ -174,23 +174,30 @@ module HydraBones
       #
       def self.kill_vpc
         # Check if vpc exists
-        vpcs = AWS::EC2::VPCCollection.new
+        ec2 = AWS::EC2.new
+        vpcs = ec2.vpcs
         vpc = vpcs.with_tag( "Name", [VPC_NAME]).first
         if vpc.nil?
           raise MissingResourceError.new("VPC with name #{VPC_NAME} not found.  Unable to kill.")
         end
 
-        puts "Pre terminate instance status:"
-        vpc.instances.each{ |i| printf("%-20s %-10s %-10s\n", i.id, i.tags["Name"], i.status) }
-        
         # Terminate ec2 instances
-        vpc.instances.each{ |i| i.terminate }
+        # terminate must remove instance from the vpc instances, but does not poll until terminated
+        # so make an array of the instance that we're killing and watch them from the ec2.instances set
+        instances_to_kill = Array.new
+        vpc.instances.each do |i| 
+          instances_to_kill << i.id
+          i.terminate 
+        end
+
+        instances_to_kill.each do |k|
+          puts "Instance: #{k} exists? #{ec2.instances[k].exists?}"
+        end
 
         # Poll for instances to terminate.
         i = 0
         loop do
-
-          if vpc.instances.all? { |i| i.status == :terminated }
+          if instances_to_kill.all? { |iid| !ec2.instances[iid].exists? || ec2.instances[iid].status == :terminated}
             puts "All instances terminated."
             break
           elsif i > 9
@@ -198,13 +205,10 @@ module HydraBones
           end
 
           i = i + 1
-          puts "Waiting for instances to terminate.."
-          sleep 10
-
+          puts "Waiting for instances to terminate... "
+          sleep 17
+          puts "... #{i*17} sec"
         end
-
-        puts "post terminate instance status:"
-        vpc.instances.each{ |i| printf("%-20s %-10s %-10s\n", i.id, i.tags["Name"], i.status) }
 
         # Remove internet_gateway
         ig = vpc.internet_gateway
@@ -243,11 +247,8 @@ module HydraBones
         end
 
         # Remove vpc
-        sleep(30)
-        puts "post wait"
-        vpc.instances.each{ |i| printf("%-20s %-10s %-10s\n", i.id, i.tags["Name"], i.status) }
-
         vpc.delete
+
       end
 
       # Do steps required to create new vpc instance.
