@@ -10,6 +10,8 @@ git clone https://github.com/grosscol/hydra-bones.git
 
 ## Usage
 
-hydra-bones setup aws-vpc
-
-
+hydra-bones aws setup
+hydra-bones aws teardown 
+hydra-bones deb setup fedora-solr
+hydra-bones deb setup web
+hydra-bones deb teardown
