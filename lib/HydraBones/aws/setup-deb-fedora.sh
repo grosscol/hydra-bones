@@ -9,7 +9,7 @@ sudo apt-get install -y --no-install-recommends curl less openjdk-7-jre tomcat8 
 # Configure environment variables, and append to bash.rc
 
 [ -z "$CATALINA_HOME" ] && CATALINA_HOME="/usr/share/tomcat8"
-if env | grep -q '^CATALINA_HOME=' > /dev/null
+if [ `env | grep -q '^CATALINA_HOME='` -gt 0 ]
 then
   # Var already exported
   echo "CATLINA_HOME already exported: $CATALINA_HOME"
@@ -19,7 +19,7 @@ else
 fi
 
 [ -z "$JAVA_HOME" ] && JAVA_HOME="/usr/lib/jvm/java-7-openjdk-amd64"
-if env | grep -q '^JAVA_HOME=' > /dev/null
+if [ `env | grep -q '^JAVA_HOME='` -gt 0 ]
 then
   # Var already exported
   echo "JAVA_HOME already exported: $JAVA_HOME"
@@ -28,21 +28,27 @@ else
   echo "export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64" >> ~/.bashrc
 fi
 
-# just get the WAR files.
+# Make directory to hold fcrepo wars
 sudo mkdir -p /usr/local/fcrepo
+
+# Just get the WAR files.
+#FCWARA_LOC=http://repo1.maven.org/maven2/org/fcrepo/fcrepo-webapp/4.0.0-beta-03/fcrepo-webapp-4.0.0-beta-03-auth.war
+FCWARA_LOC=https://s3.amazonaws.com/cag-fed-deb/fcrepo-webapp-4.0.0-beta-03-auth.war
 cd /usr/local/fcrepo
 if [ -e /usr/local/fcrepo/fcrepo-webapp-4.0.0-beta-03-auth.war ]
 then
   echo "fcrepo-webapp-4.0.0-beta-03-auth.war already present"
 else
-  wget http://repo1.maven.org/maven2/org/fcrepo/fcrepo-webapp/4.0.0-beta-03/fcrepo-webapp-4.0.0-beta-03-auth.war
+  wget ${FCWARA_LOC}
 fi
 
+# FCWAR_LOC=http://repo1.maven.org/maven2/org/fcrepo/fcrepo-webapp/4.0.0-beta-03/fcrepo-webapp-4.0.0-beta-03.war
+FCWAR_LOC=https://s3.amazonaws.com/cag-fed-deb/fcrepo-webapp-4.0.0-beta-03.war
 if [ -e /usr/local/fcrepo/fcrepo-webapp-4.0.0-beta-03.war ]
 then
   echo "fcrepo-webapp-4.0.0-beta-03.war already present"
 else
-  wget http://repo1.maven.org/maven2/org/fcrepo/fcrepo-webapp/4.0.0-beta-03/fcrepo-webapp-4.0.0-beta-03.war
+  wget ${FCWAR_LOC}
 fi
 
 
