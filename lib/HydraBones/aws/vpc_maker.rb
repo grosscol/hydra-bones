@@ -26,7 +26,8 @@ module HydraBones
       WEB_IMG_S3 = ""
 
       FED_USR_DATA = "#!/bin/sh
-echo -e \"127.0.0.1\t$HOSTNAME\" | sudo tee --append /etc/hosts"
+alias curl-check=\"curl --write-out '%{http_code}\n' -s -o /dev/null\"
+echo \"127.0.0.1\t$HOSTNAME\" | tee --append /etc/hosts"
       WEB_USR_DATA = "" 
       NAT_USR_DATA = "#!/bin/sh
 echo 1 > /proc/sys/net/ipv4/ip_forward
@@ -111,11 +112,14 @@ EOF
         # Back end hosts allow http traffic out to anywhere, but only in from nat
         sg_back.authorize_ingress(:tcp, 80, sg_nat)
         sg_back.authorize_egress("0.0.0.0/0", :protocol => :tcp, :ports => 80 )
+        sg_back.authorize_ingress(:tcp, 443, sg_nat)
+        sg_back.authorize_egress("0.0.0.0/0", :protocol => :tcp, :ports => 443 )
 
         # Nat allows http traffic inbound and outbound from anywhere
         sg_nat.authorize_ingress(:tcp, 80, "0.0.0.0/0")
         sg_nat.authorize_egress("0.0.0.0/0", :protocol => :tcp, :ports => 80 )
-
+        sg_nat.authorize_ingress(:tcp, 443, "0.0.0.0/0")
+        sg_nat.authorize_egress("0.0.0.0/0", :protocol => :tcp, :ports => 443 )
         
         # Create IAM roles
         # punt
@@ -221,10 +225,10 @@ EOF
         })
         nat.tag("Name", :value => "nat-host")
 
-        # Poll for nat host to be running
+        # Poll for nat and bastion host to be running
         loop do
-          break if nat.status == :running
-          sleep 10
+          break if nat.status == :running && bast.status == :running
+          sleep 13
         end
 
         # Create route for private subnet through nat instance
