@@ -1,5 +1,5 @@
-require "HydraBones/version"
-require "HydraBones/aws"
+require "hydra-bones/version"
+require "hydra-bones/aws"
 
 require 'ostruct' #Syntactic sugar around a hash
 require 'optparse' #Options parsing class

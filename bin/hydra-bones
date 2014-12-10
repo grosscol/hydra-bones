@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'HydraBones'
+require 'hydra-bones'
 
 HydraBones::Application.run
 

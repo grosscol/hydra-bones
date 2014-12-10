@@ -1,10 +1,10 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'HydraBones/version'
+require 'hydra-bones/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "HydraBones"
+  spec.name          = "hydra-bones"
   spec.version       = HydraBones::VERSION
   spec.authors       = ["Colin Gross"]
   spec.email         = ["grosscol@umich.edu"]

@@ -1,4 +1,4 @@
-require "HydraBones/aws/vpc_maker"
+require "hydra-bones/aws/vpc_maker"
 
 module HydraBones
   module AWSSkeleton
