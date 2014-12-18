@@ -1,6 +1,5 @@
 require 'aws-sdk'
 
-
 module HydraBones
   module AWSSkeleton
 
@@ -25,6 +24,8 @@ module HydraBones
       FED_IMG_S3 = ""
       WEB_IMG_S3 = ""
 
+      # Alias curl-check for quick checks of http response codes.
+      # Add hostname to /etc/hosts so sudo doesn't emit warnings.
       FED_USR_DATA = "#!/bin/sh
 alias curl-check=\"curl --write-out '%{http_code}\n' -s -o /dev/null\"
 echo \"127.0.0.1\t$HOSTNAME\" | tee --append /etc/hosts"
@@ -49,6 +50,13 @@ EOF
       def self.setup_new_vpc
         # Create new vpc or die
         vpc = create_vpc
+
+        # Give vpc time to become available
+        for i in 0..5 do
+          break if vpc.state == :available 
+          puts "waiting for vpc to become available"
+          sleep 5
+        end
 
         # AWS EC2 instance and client
         ec2 = AWS::EC2.new
@@ -395,7 +403,7 @@ EOF
         end
 
         # debug list all vpcs
-        vpcs.each{ |v| printf("%-35s %-35s\n", v.id, v.tags["Name"]) }
+        # vpcs.each{ |v| printf("%-35s %-35s\n", v.id, v.tags["Name"]) }
 
         if already_exists
           # List the ids and names of the existing vpcs
