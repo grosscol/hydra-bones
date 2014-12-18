@@ -22,7 +22,6 @@ module HydraBones
       # Eat First level command and call relevant class
       case ARGV.shift
       when "aws"
-        puts "Setup on AWS"
         HydraBones::AWSSkeleton::Deployer.run( ARGV )
       when "deb"
         puts "Command not implemented."
@@ -31,8 +30,6 @@ module HydraBones
       else
         puts "Command not recognized."
       end
-
-      puts "End of Line."
     end
 
     # Parse the ARGV for options
@@ -57,7 +54,7 @@ module HydraBones
         opts.on_tail("-h", "--help", "Show this message") do
           puts opts
           puts "Commands are:"
-          puts ["aws",["  setup","  teardown"], "deb", "um"]
+          puts ["aws",["  setup","  teardown", "  bastip"], "deb", "um"]
           exit
         end
 

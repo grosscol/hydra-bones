@@ -22,6 +22,9 @@ module HydraBones
           puts "Tearing down AWS instances and vpc."
           HydraBones::AWSSkeleton::VPCMaker.kill_vpc
 
+        when "bastip"
+          puts HydraBones::AWSSkeleton::VPCMaker.bastion_ip
+
         else
           puts "Command not recognized."
         end

@@ -212,7 +212,7 @@ EOF
           :security_groups => [bast_sec],
           :count => 1
         })
-        bast.tag("Name", :value => "bastion-host")
+        bast.tag("Name", :value => BAST_NAME)
         
         # Create nat host
         nat = vpc.instances.create({
@@ -231,7 +231,7 @@ EOF
           :count => 1,
           :user_data => NAT_USR_DATA
         })
-        nat.tag("Name", :value => "nat-host")
+        nat.tag("Name", :value => NAT_NAME)
 
         # Poll for nat and bastion host to be running
         loop do
@@ -293,7 +293,6 @@ EOF
         web_host.tag("Name", :value => "web-host")
        
       end
-
 
       # Do steps required to deallocate vpc.
       # 
@@ -416,6 +415,23 @@ EOF
         return vpc
       end
 
+      # Get the IP address of the bastion host.
+      # 
+      # == Returns:
+      # The ip address as a string.
+      #
+      def self.bastion_ip
+        ec2 = AWS::EC2.new
+
+        vpc = ec2.vpcs.with_tag( "Name", [VPC_NAME]).first
+        return "#{VPC_NAME} not found" if vpc.nil?
+
+        bast = vpc.instances.with_tag( "Name", [BAST_NAME]).first
+        return "#{BAST_NAME} not found" if bast.nil?
+
+        return bast.ip_address
+      end
+      
     end
   end
 end
