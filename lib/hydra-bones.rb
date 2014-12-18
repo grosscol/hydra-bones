@@ -35,7 +35,7 @@ module HydraBones
       puts "End of Line."
     end
 
-    # Parse the ARGV for options and commands
+    # Parse the ARGV for options
     #
     # == Returns
     # Open struct of options
@@ -43,14 +43,21 @@ module HydraBones
     def self.parse_options(args)
       #make a structure to hold the options
       options = OpenStruct.new
+      options.debug = false
 
       #setup options parser to fill in the options structure
       opts_parser = OptionParser.new do |opts|
         opts.banner = "Usage: hydra-bones [options] command"
         
         opts.separator("Options are:")
+        opts.on_tail("-d", "--debug", "Use debug mode.") do
+          options.debug = true
+        end
+
         opts.on_tail("-h", "--help", "Show this message") do
           puts opts
+          puts "Commands are:"
+          puts ["aws",["  setup","  teardown"], "deb", "um"]
           exit
         end
 
@@ -72,5 +79,6 @@ module HydraBones
       return options
     end
  
+
   end
 end
