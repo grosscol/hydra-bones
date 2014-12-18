@@ -1,10 +1,10 @@
 
 
 namespace :aws do
-  desc "Get the ip of bastion host in form, 'bast=<ip_addr>'"
-  task :bast do
-    bast_ip=''
-    puts "bast=#{bast_ip}"
+
+  desc "Push scripts to s3 buckets and make public read only."
+  task :push_scripts do
+    puts "Pushshing scripts to bucket: #{ENV['USER']||ENV['USERNAME']}-hydra-scripts"
   end
 
 end
