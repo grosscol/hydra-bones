@@ -103,6 +103,10 @@ EOF
         sg_nat  = sgs.create( "nat_sec",  {:vpc => vpc.id, :description => "nat host security"})
         sg_web  = sgs.create( "web_sec",  {:vpc => vpc.id, :description => "web host security"})
         sg_back = sgs.create( "back_sec", {:vpc => vpc.id, :description => "back end host security"})
+        sg_bast.tag("Name", :value => "bast_sec")
+        sg_nat.tag("Name", :value => "nat_sec")
+        sg_web.tag("Name", :value => "web_sec")
+        sg_back.tag("Name", :value => "back_sec")
 
         # Allow ping for web and backend from within VPC
         sg_web.allow_ping( VPC_CIDR )
@@ -128,6 +132,14 @@ EOF
         sg_nat.authorize_egress("0.0.0.0/0", :protocol => :tcp, :ports => 80 )
         sg_nat.authorize_ingress(:tcp, 443, "0.0.0.0/0")
         sg_nat.authorize_egress("0.0.0.0/0", :protocol => :tcp, :ports => 443 )
+
+        # Web allows http traffic in/out bound from anywhere
+        sg_web.authorize_ingress(:tcp, 80, "0.0.0.0/0")
+        sg_web.authorize_egress("0.0.0.0/0", :protocol => :tcp, :ports => 80 )
+        sg_web.authorize_ingress(:tcp, 8080, "0.0.0.0/0")
+        sg_web.authorize_egress("0.0.0.0/0", :protocol => :tcp, :ports => 8080 )
+        sg_web.authorize_ingress(:tcp, 443, "0.0.0.0/0")
+        sg_web.authorize_egress("0.0.0.0/0", :protocol => :tcp, :ports => 443 )
         
         # Create IAM roles
         # punt
@@ -190,7 +202,7 @@ EOF
         bast_sec = vpc.security_groups.filter('group-name', 'bast_sec').first
         nat_sec = vpc.security_groups.filter('group-name', 'nat_sec').first
         back_sec = vpc.security_groups.filter('group-name', 'back_sec').first
-
+        web_sec = vpc.security_groups.filter('group-name', 'web_sec').first
         
         if bast_sec.nil? 
           raise MissingResourceError.new("Unable to find security group bast_sec")
@@ -234,9 +246,13 @@ EOF
         nat.tag("Name", :value => NAT_NAME)
 
         # Poll for nat and bastion host to be running
-        loop do
+        for i in 1..10 do
           break if nat.status == :running && bast.status == :running
           sleep 13
+        end
+
+        if nat.status != :running || bast.status != :running
+          raise MissingResourceError.new("NAT or Bastion host not running after 130 seconds.")
         end
 
         # Create route for private subnet through nat instance
@@ -247,12 +263,9 @@ EOF
         # Disable source/destination checks for NAT
         ec2.client.modify_instance_attribute({ :instance_id => nat.id, :source_dest_check => {:value => false} })
 
-        # Create elastic ips for NAT and Bastion Host
-        eip_nat  = ec2.elastic_ips.create
-        eip_bast = ec2.elastic_ips.create
-        eip_nat.associate({:instance => nat.id})
-        eip_bast.associate({:instance => bast.id})
-        
+        if back_sec.nil? 
+          raise MissingResourceError.new("Unable to find security group bast_sec")
+        end
 
         # Create Fedora/Solr host on private network
         fed_host = vpc.instances.create({
@@ -273,6 +286,10 @@ EOF
         })
         fed_host.tag("Name", :value => "fedora-host")
         
+        if web_sec.nil? 
+          raise MissingResourceError.new("Unable to find security group bast_sec")
+        end
+
         # Create Hydra host on public network
         web_host = vpc.instances.create({
           :image_id => deb_linux_ami.id,
@@ -286,12 +303,30 @@ EOF
             }],
           :subnet => pubnet.id,
           :key_name => hydra_key.name,
-          :security_groups => [back_sec],
+          :security_groups => [web_sec],
           :count => 1,
           :user_data => "web host user data"
         })
         web_host.tag("Name", :value => "web-host")
        
+        # Poll for instances that require public ips to be running
+        for i in 1..10 do
+          break if web_host.status == :running
+          sleep 13
+        end
+
+        if web_host.status != :running
+          raise MissingResourceError.new("Web host not running after 130 seconds.")
+        end
+
+        # Create elastic ips for NAT and Bastion Host
+        eip_nat  = ec2.elastic_ips.create
+        eip_bast = ec2.elastic_ips.create
+        eip_web = ec2.elastic_ips.create
+        eip_nat.associate({:instance => nat.id})
+        eip_bast.associate({:instance => bast.id})
+        eip_web.associate({:instance => web_host.id})
+
       end
 
       # Do steps required to deallocate vpc.
