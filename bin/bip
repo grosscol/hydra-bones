@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require 'hydra-bones'
+
+ARGV.clear
+ARGV[0,2]=['aws','bastip']
+HydraBones::Application.run
