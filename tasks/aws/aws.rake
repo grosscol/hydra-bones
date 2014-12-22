@@ -11,12 +11,12 @@ namespace :aws do
 
     # Get the existing bucket or create one if not extant.
     bucket = s3.buckets[bucket_name]
-    bucket = s3.buckets.create(bucket_name,{:acl => :public_read}) unless bucket.exits?
+    bucket = s3.buckets.create(bucket_name,{:acl => :public_read}) unless bucket.exists?
 
     # Push all scripts in scripts/aws to s3
     Dir.glob('scripts/aws/*').each do |f|
       puts "pushing: #{f}" 
-      bucket.objects[File.basename(f)].write(:file => f)
+      bucket.objects[File.basename(f)].write(:file => f, :acl => :public_read)
     end
 
 

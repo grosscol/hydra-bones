@@ -26,10 +26,11 @@ module HydraBones
 
       # Alias curl-check for quick checks of http response codes.
       # Add hostname to /etc/hosts so sudo doesn't emit warnings.
+      BST_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/bast_usr.sh"
       FED_USR_DATA = "#!/bin/sh
 alias curl-check=\"curl --write-out '%{http_code}\n' -s -o /dev/null\"
 echo \"127.0.0.1\t$HOSTNAME\" | tee --append /etc/hosts"
-      WEB_USR_DATA = "" 
+      WEB_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/web_usr.sh" 
       NAT_USR_DATA = "#!/bin/sh
 echo 1 > /proc/sys/net/ipv4/ip_forward
 echo 0 > /proc/sys/net/ipv4/conf/eth0/send_redirects
@@ -222,7 +223,8 @@ EOF
           :subnet => pubnet.id,
           :key_name => bast_key.name,
           :security_groups => [bast_sec],
-          :count => 1
+          :count => 1,
+          :user_data => BST_USR_DATA
         })
         bast.tag("Name", :value => BAST_NAME)
         
@@ -282,7 +284,7 @@ EOF
           :key_name => hydra_key.name,
           :security_groups => [back_sec],
           :count => 1,
-          :user_data => "Fedora host user data"
+          :user_data => FED_USR_DATA
         })
         fed_host.tag("Name", :value => "fedora-host")
         
@@ -305,7 +307,7 @@ EOF
           :key_name => hydra_key.name,
           :security_groups => [web_sec],
           :count => 1,
-          :user_data => "web host user data"
+          :user_data => WEB_USR_DATA
         })
         web_host.tag("Name", :value => "web-host")
        
