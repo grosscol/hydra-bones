@@ -331,19 +331,77 @@ EOF
 
       end
 
+      # Return hydra vpc or throw error if non-existant
+      # 
+      # == Returns
+      # vpc
+      #
+      def self.hydra_vpc(ec2=nil)
+        ec2 = AWS::EC2.new if ec2.nil?
+        vpcs = ec2.vpcs
+        vpc = vpcs.with_tag( "Name", [VPC_NAME]).first
+        if vpc.nil?
+          raise MissingResourceError.new("VPC with name #{VPC_NAME} not found.  Unable to kill.")
+        end
+        return vpc
+      end
+
+      # Terminate ec2 instances within the hydra vpc
+      #
+      # Calling terminate removes instance from the vpc instances, but does not poll until terminated.
+      # So make an array of the instance that we're killing and watch them from the ec2.instances set.
+      #
+      # == Parameters
+      # AWS::EC2 instance (optional)
+      # 
+      # == Returns
+      # Boolean indicating success or failure to terminate all instances that were in the vpc.
+      #
+      def self.kill_ec2_instances(ec2=nil)
+        ec2 = AWS::EC2.new if ec2.nil?
+        vpc = hydra_vpc(ec2)
+
+        instances_to_kill = Array.new
+        vpc.instances.each do |i| 
+          instances_to_kill << i.id
+          # Disassociate and release elastic ip if present
+          eip = i.elastic_ip
+          if eip
+            eip.disassociate
+            eip.delete
+          end
+          i.terminate 
+        end
+
+        instances_to_kill.each do |k|
+          puts "Instance: #{k} status #{ec2.instances[k].status}"
+        end
+
+        # Poll for instances to terminate.
+        all_terminated = false
+        puts "Waiting for instances to terminate... "
+
+        for i in 1..10 do
+          sleep 17
+          puts "... #{i*17} sec"
+          if instances_to_kill.all? { |iid| !ec2.instances[iid].exists? || ec2.instances[iid].status == :terminated}
+            all_terminated = true
+            break
+          end
+        end
+
+        return all_terminated
+      end
+
       # Do steps required to deallocate vpc.
       # 
       # == Returns
       # Nothing.
       #
       def self.kill_vpc
-        # Check if vpc exists
+        # Get ahold of the hydra vpc
         ec2 = AWS::EC2.new
-        vpcs = ec2.vpcs
-        vpc = vpcs.with_tag( "Name", [VPC_NAME]).first
-        if vpc.nil?
-          raise MissingResourceError.new("VPC with name #{VPC_NAME} not found.  Unable to kill.")
-        end
+        vpc = hydra_vpc(ec2)
 
         # Terminate ec2 instances
         # terminate must remove instance from the vpc instances, but does not poll until terminated
