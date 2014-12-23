@@ -158,11 +158,7 @@ EOF
       def self.fill_in_vpc
         ec2 = AWS::EC2.new
 
-        # Get VPC
-        vpc = ec2.vpcs.with_tag( "Name", [VPC_NAME]).first
-        if vpc.nil?
-          raise MissingResourceError.new("VPC with name #{VPC_NAME} not found.  Unable to fill.")
-        end
+        vpc = hydra_vpc(ec2)
 
         # Check for ssh keys or die.
         # Expect ssh keys to be in $HOME/.ssh
@@ -260,6 +256,7 @@ EOF
         # Create route for private subnet through nat instance
         rt_prv = ec2.route_tables.create({:vpc => vpc.id})
         rt_prv.create_route("0.0.0.0/0", {:instance => nat.id})
+        rt_prv.tag("Name", :value => "nat_route")
         prvnet.set_route_table( rt_prv.id )
 
         # Disable source/destination checks for NAT
@@ -312,9 +309,9 @@ EOF
         web_host.tag("Name", :value => "web-host")
        
         # Poll for instances that require public ips to be running
-        for i in 1..10 do
+        for i in 1..20 do
+          sleep 3
           break if web_host.status == :running
-          sleep 13
         end
 
         if web_host.status != :running
@@ -357,10 +354,11 @@ EOF
       # == Returns
       # Boolean indicating success or failure to terminate all instances that were in the vpc.
       #
-      def self.kill_ec2_instances(ec2=nil)
+      def self.unfill_vpc(ec2=nil)
         ec2 = AWS::EC2.new if ec2.nil?
         vpc = hydra_vpc(ec2)
 
+        # Terminate Instances & Elastic IPs
         instances_to_kill = Array.new
         vpc.instances.each do |i| 
           instances_to_kill << i.id
@@ -390,6 +388,13 @@ EOF
           end
         end
 
+        # Remove private route through nat instance
+        nat_rt = vpc.route_tables.with_tag("Name", ["nat_route"]).first
+        if nat_rt.nil? == false
+          nat_rt.subnets.each{|sn| sn.route_table_association.delete}
+          nat_rt.delete
+        end
+
         return all_terminated
       end
 
@@ -403,39 +408,11 @@ EOF
         ec2 = AWS::EC2.new
         vpc = hydra_vpc(ec2)
 
-        # Terminate ec2 instances
-        # terminate must remove instance from the vpc instances, but does not poll until terminated
-        # so make an array of the instance that we're killing and watch them from the ec2.instances set
-        instances_to_kill = Array.new
-        vpc.instances.each do |i| 
-          instances_to_kill << i.id
-          # Disassociate and release elastic ip if present
-          eip = i.elastic_ip
-          if eip
-            eip.disassociate
-            eip.delete
-          end
-          i.terminate 
-        end
-
-        instances_to_kill.each do |k|
-          puts "Instance: #{k} status #{ec2.instances[k].status}"
-        end
-
-        # Poll for instances to terminate.
-        i = 0
-        loop do
-          if instances_to_kill.all? { |iid| !ec2.instances[iid].exists? || ec2.instances[iid].status == :terminated}
-            puts "All instances terminated."
-            break
-          elsif i > 9
-            raise "Loop taking too long."
-          end
-
-          i = i + 1
-          puts "Waiting for instances to terminate... "
-          sleep 17
-          puts "... #{i*17} sec"
+        # Terminate all ec2 instances their elastic ips
+        if unfill_vpc(ec2)
+          puts "All instances terminated."
+        else
+          raise "Unable to terminate all ec2 instances."
         end
 
         # Remove internet_gateway
@@ -481,6 +458,8 @@ EOF
 
         # Remove vpc
         vpc.delete
+
+        puts "Resources deallocation complete and VPC deleted."
 
       end
 
