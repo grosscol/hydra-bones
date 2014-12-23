@@ -19,8 +19,13 @@ module HydraBones
           HydraBones::AWSSkeleton::VPCMaker.fill_in_vpc
 
         when "teardown"
-          puts "Tearing down AWS instances and vpc."
-          HydraBones::AWSSkeleton::VPCMaker.kill_vpc
+          if cmd.shift == "ec2"
+            puts "Tearing down AWS instances only."
+            HydraBones::AWSSkeleton::VPCMaker.unfill_vpc
+          else
+            puts "Tearing down AWS instances and vpc."
+            HydraBones::AWSSkeleton::VPCMaker.kill_vpc
+          end
 
         when "bastip"
           puts HydraBones::AWSSkeleton::VPCMaker.bastion_ip

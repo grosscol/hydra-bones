@@ -54,7 +54,7 @@ module HydraBones
         opts.on_tail("-h", "--help", "Show this message") do
           puts opts
           puts "Commands are:"
-          puts ["aws",["  setup","  teardown", "  bastip"], "deb", "um"]
+          puts ["aws",["  setup","  teardown","  teardown ec2","  bastip"], "deb", "um"]
           exit
         end
 
