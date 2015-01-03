@@ -27,7 +27,7 @@ module HydraBones
       # Alias curl-check for quick checks of http response codes.
       # Add hostname to /etc/hosts so sudo doesn't emit warnings.
       BST_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/bast_usr.sh"
-      FED_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/setup_deb_fedora.sh"
+      FED_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/back_usr.sh"
       WEB_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/web_usr.sh" 
       NAT_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/nat_usr.sh"
 
