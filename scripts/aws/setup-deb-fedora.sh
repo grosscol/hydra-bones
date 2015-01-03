@@ -31,38 +31,13 @@ fi
 # Make directory to hold fcrepo wars
 mkdir -p /usr/local/fcrepo
 
-# Just get the WAR files.
-#FCWARA_LOC=http://repo1.maven.org/maven2/org/fcrepo/fcrepo-webapp/4.0.0-beta-03/fcrepo-webapp-4.0.0-beta-03-auth.war
-FCWARA_LOC=https://s3.amazonaws.com/cag-fed-deb/fcrepo-webapp-4.0.0-beta-03-auth.war
-cd /usr/local/fcrepo
-if [ -e /usr/local/fcrepo/fcrepo-webapp-4.0.0-beta-03-auth.war ]
+FCWAR_LOC=https://s3.amazonaws.com/cag-fed-deb/fcrepo-webapp-4.0.0.war
+if [ -e /usr/local/fcrepo/fcrepo-webapp-4.0.0.war ]
 then
-  echo "fcrepo-webapp-4.0.0-beta-03-auth.war already present"
-else
-  wget ${FCWARA_LOC}
-fi
-
-# FCWAR_LOC=http://repo1.maven.org/maven2/org/fcrepo/fcrepo-webapp/4.0.0-beta-03/fcrepo-webapp-4.0.0-beta-03.war
-FCWAR_LOC=https://s3.amazonaws.com/cag-fed-deb/fcrepo-webapp-4.0.0-beta-03.war
-if [ -e /usr/local/fcrepo/fcrepo-webapp-4.0.0-beta-03.war ]
-then
-  echo "fcrepo-webapp-4.0.0-beta-03.war already present"
+  echo "fcrepo-webapp-4.0.0.war already present"
 else
   wget ${FCWAR_LOC}
 fi
-
-
-# Install/Update Fedora 4 Repository
-# if [ -e /usr/local/fcrepo4/.git ]
-# then
-#   cd /usr/local/fcrepo4
-#   git pull
-#   mvn compile
-# else
-#   cd /usr/local
-#   git clone https://github.com/fcrepo4/fcrepo4.git
-#   mvn install
-# fi
 
 # Make directory for Fedora data on this instance
 mkdir -p /usr/local/fedora-data
@@ -71,9 +46,9 @@ chown -R tomcat8:tomcat8 /usr/local/fedora-data
 # Copy the fedora war file to the default CATALINA_BASE directory
 if [ -e /var/lib/tomcat8/webapps/fcrepo.war ]
 then
-  echo "fcrepo-webapp-4.0.0-beta-03.war already deployed to /var/lib/tomcat8/webapps/fcrepo.war"
+  echo "fcrepo-webapp-4.0.0.war already deployed to /var/lib/tomcat8/webapps/fcrepo.war"
 else
-  cp /usr/local/fcrepo/fcrepo-webapp-4.0.0-beta-03.war /var/lib/tomcat8/webapps/fcrepo.war
+  cp /usr/local/fcrepo/fcrepo-webapp-4.0.0.war /var/lib/tomcat8/webapps/fcrepo.war
 fi
 
 # Modify permissions file so that the web app directory is writable by tomcat8
