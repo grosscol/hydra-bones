@@ -27,21 +27,9 @@ module HydraBones
       # Alias curl-check for quick checks of http response codes.
       # Add hostname to /etc/hosts so sudo doesn't emit warnings.
       BST_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/bast_usr.sh"
-      FED_USR_DATA = "#!/bin/sh
-alias curl-check=\"curl --write-out '%{http_code}\n' -s -o /dev/null\"
-echo \"127.0.0.1\t$HOSTNAME\" | tee --append /etc/hosts"
+      FED_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/setup_deb_fedora.sh"
       WEB_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/web_usr.sh" 
-      NAT_USR_DATA = "#!/bin/sh
-echo 1 > /proc/sys/net/ipv4/ip_forward
-echo 0 > /proc/sys/net/ipv4/conf/eth0/send_redirects
-/sbin/iptables -t nat -A POSTROUTING -o eth0 -s 0.0.0.0/0 -j MASQUERADE
-/sbin/iptables-save > /etc/sysconfig/iptables
-mkdir -p /etc/sysctl.d/
-cat <<EOF > /etc/sysctl.d/nat.conf
-net.ipv4.ip_forward = 1
-net.ipv4.conf.eth0.send_redirects = 0
-EOF
-"
+      NAT_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/nat_usr.sh"
 
       # Allocate vpc and resources that can be resolved without ec2 instances
       #
