@@ -110,11 +110,13 @@ module HydraBones
         [sg_nat,sg_web,sg_back].each{ |g| g.authorize_ingress(:tcp, 22, sg_bast) }
         [sg_nat,sg_web,sg_back].each{ |g| g.authorize_egress(sg_bast, :protocol => :tcp, :ports => 22 ) }
 
-        # Back end hosts allow http traffic out to anywhere, but only in from nat
+        # Back end hosts allow http traffic out to anywhere, but only in from nat and web sec groups
         sg_back.authorize_ingress(:tcp, 80, sg_nat)
         sg_back.authorize_egress("0.0.0.0/0", :protocol => :tcp, :ports => 80 )
         sg_back.authorize_ingress(:tcp, 443, sg_nat)
         sg_back.authorize_egress("0.0.0.0/0", :protocol => :tcp, :ports => 443 )
+        sg_back.authorize_ingress(:tcp, 8080, sg_web)
+        sg_back.authorize_egress("0.0.0.0/0", :protocol => :tcp, :ports => 8080 )
 
         # Nat allows http traffic inbound and outbound from anywhere
         sg_nat.authorize_ingress(:tcp, 80, "0.0.0.0/0")
