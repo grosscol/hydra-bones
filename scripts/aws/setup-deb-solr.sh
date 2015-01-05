@@ -19,7 +19,7 @@ if [ -e /usr/local/solr/${SOLR_VER}.tgz ]
 then
   echo "${SOLR_VER}.tgz already present"
 else
-  wget $SOLR_TAR_LOC
+  wget $SOLR_TAR_LOC /usr/local/solr/${SOLR_VER}.tgz
 fi
 # Check that Solr was obtained from the location
 if [ -e /usr/local/solr/${SOLR_VER}.tgz ]
@@ -72,9 +72,19 @@ cp /usr/local/solr/${SOLR_VER}/example/lib/ext/* /usr/share/tomcat8/lib
 
 # Remove the log4j libraries,  because they prevent Fedora4 from working
 rm /usr/share/tomcat8/lib/log4j*.jar
-rm /sur/share/tomcat8/lib/slf4j-log4j*.jar
+rm /usr/share/tomcat8/lib/slf4j-log4j*.jar
 
 # Modify the solr.xml to know to use tomcats' port 8080
 
 # Restart the tomcat service
-# service tomcat8 restart
+service tomcat8 restart
+
+# Check if solr is running
+echo "Checking if solr is up and running..."
+resp=`curl --write-out '%{http_code}\n' -s -o /dev/null http://localhost:8080/fcrepo/rest`
+if [ ${resp} -eq 200 ]
+then
+  echo "Response code: ${resp}. Fedora repo is up and running."
+else
+  echo "Response code: ${resp}."
+fi

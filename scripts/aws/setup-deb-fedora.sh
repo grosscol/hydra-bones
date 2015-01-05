@@ -9,26 +9,26 @@ apt-get install -y --no-install-recommends curl less openjdk-7-jre tomcat8 tomca
 # Configure environment variables, and append to bash.rc
 
 [ -z "$CATALINA_HOME" ] && CATALINA_HOME="/usr/share/tomcat8"
-if [ `env | grep -q '^CATALINA_HOME='` -gt 0 ]
+if [ `env | grep -c '^CATALINA_HOME='` -gt 0 ]
 then
   # Var already exported
   echo "CATLINA_HOME already exported: $CATALINA_HOME"
 else
   export CATALINA_HOME
-  echo "export CATALINA_HOME=/usr/share/tomcat8" >> ~/.bashrc
+  echo "export CATALINA_HOME=/usr/share/tomcat8" >> /home/admin/.bashrc
 fi
 
 [ -z "$JAVA_HOME" ] && JAVA_HOME="/usr/lib/jvm/java-7-openjdk-amd64"
-if [ `env | grep -q '^JAVA_HOME='` -gt 0 ]
+if [ `env | grep -c '^JAVA_HOME='` -gt 0 ]
 then
   # Var already exported
   echo "JAVA_HOME already exported: $JAVA_HOME"
 else
   export JAVA_HOME
-  echo "export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64" >> ~/.bashrc
+  echo "export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64" >> /home/admin/.bashrc
 fi
 
-# Make directory to hold fcrepo wars
+# Make directory to hold fcrepo war
 mkdir -p /usr/local/fcrepo
 
 FCWAR_LOC=https://s3.amazonaws.com/cag-fed-deb/fcrepo-webapp-4.0.0.war
@@ -36,7 +36,7 @@ if [ -e /usr/local/fcrepo/fcrepo-webapp-4.0.0.war ]
 then
   echo "fcrepo-webapp-4.0.0.war already present"
 else
-  wget ${FCWAR_LOC}
+  wget ${FCWAR_LOC} -O /usr/local/fcrepo/fcrepo-webapp-4.0.0.war
 fi
 
 # Make directory for Fedora data on this instance
@@ -52,8 +52,8 @@ else
 fi
 
 # Modify permissions file so that the web app directory is writable by tomcat8
-chown -R tomcat8:tomcat8 /var/lib/tomcat8/webapps/fcrepo
-chmod -R 0774 /var/lib/tomcat8/webapps/fcrepo
+chown -R tomcat8:tomcat8 /var/lib/tomcat8/webapps/fcrepo.war
+chmod -R 0774 /var/lib/tomcat8/webapps/fcrepo.war
 
 # Modify the /etc/default/tomcat8 to have JAVA_OPTS include the fcrepo.home.
 if [ `grep -c -e '-Dfcrepo.home' < /etc/default/tomcat8` -gt 0 ]
