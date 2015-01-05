@@ -31,4 +31,4 @@ apt-get -y -t wheezy-backports install tomcat8
 /home/admin/fedora-setup.sh
 
 # Run setup script for solr
-
+/home/admin/solr-setup.sh

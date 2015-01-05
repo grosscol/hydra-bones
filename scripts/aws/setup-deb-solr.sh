@@ -2,8 +2,9 @@
 
 SOLR_MIRROR="http://psg.mtu.edu/pub/apache/lucene/solr"
 SOLR_VER="solr-4.10.2"
-#SOLR_TAR_LOC="${SOLR_MIRROR}/${SOLR_VER}/${SOLR_VER}.tgz"
 SOLR_TAR_LOC="https://s3.amazonaws.com/cag-fed-deb/${SOLR_VER}.tgz"
+SOLR_HOME=/opt/solr/schemaless
+SOLR_DATA=/opt/solr/schemaless/data
 
 # Obtain required packages
 apt-get update
@@ -39,7 +40,6 @@ else
 fi
 
 # Modify the /etc/default/tomcat8 to have JAVA_OPTS include the fcrepo.home.
-SOLR_HOME=/opt/solr/schemaless
 if [ `grep -c -e '-Dsolr.solr.home' < /etc/default/tomcat8` -gt 0 ]
 then
   echo "solr.solr.home option already appended to /etc/default/tomcat8"
@@ -49,7 +49,6 @@ else
 fi
 
 # Modify the /etc/default/tomcat8 to have JAVA_OPTS include the fcrepo.home.
-SOLR_DATA=/opt/solr/schemaless/data
 if [ `grep -c -e '-Dsolr.data.dir' < /etc/default/tomcat8` -gt 0 ]
 then
   echo "solr.data.dir option already appended to /etc/default/tomcat8"
@@ -74,7 +73,8 @@ cp /usr/local/solr/${SOLR_VER}/example/lib/ext/* /usr/share/tomcat8/lib
 rm /usr/share/tomcat8/lib/log4j*.jar
 rm /usr/share/tomcat8/lib/slf4j-log4j*.jar
 
-# Modify the solr.xml to know to use tomcats' port 8080
+# Modify the solr.xml to default to port 8080
+sed -i s/jetty.port:8983/appserver.port:8080/ ${SOLR_HOME}/solr.xml
 
 # Restart the tomcat service
 service tomcat8 restart
