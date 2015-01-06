@@ -1,6 +1,5 @@
 #!/bin/sh
 # Log the output of this script
-exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
 # Update apt reposisotyr data.  Install curl and alias a useful curl shortcut.
 apt-get update
