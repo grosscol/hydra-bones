@@ -26,6 +26,7 @@ module HydraBones
 
       # Alias curl-check for quick checks of http response codes.
       # Add hostname to /etc/hosts so sudo doesn't emit warnings.
+      # output : { all : '| tee -a /var/log/cloud-init-output.log' }
       BST_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/bast_usr.sh"
       FED_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/back_usr.sh"
       WEB_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/web_usr.sh" 
@@ -273,7 +274,6 @@ module HydraBones
           :count => 1,
           :user_data => FED_USR_DATA
         })
-        fed_host.tag("Name", :value => "fedora-host")
         
         if web_sec.nil? 
           raise MissingResourceError.new("Unable to find security group bast_sec")
@@ -296,17 +296,20 @@ module HydraBones
           :count => 1,
           :user_data => WEB_USR_DATA
         })
-        web_host.tag("Name", :value => "web-host")
        
         # Poll for instances that require public ips to be running
         for i in 1..20 do
-          sleep 3
+          sleep 9
           break if web_host.status == :running
         end
 
         if web_host.status != :running
-          raise MissingResourceError.new("Web host not running after 130 seconds.")
+          raise MissingResourceError.new("Web host not running after polling time expired.")
         end
+
+        # Add names to the fedora and web hosts
+        web_host.tag("Name", :value => "web-host")
+        fed_host.tag("Name", :value => "fedora-host")
 
         # Create elastic ips for NAT and Bastion Host
         eip_nat  = ec2.elastic_ips.create
