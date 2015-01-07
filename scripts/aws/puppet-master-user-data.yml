@@ -1,0 +1,32 @@
+#cloud-config
+# 
+# add security patches and bug fixes
+package_update: true
+package_upgrade: true
+# 
+# install puppet
+packages:
+ - puppetmaster
+# 
+# configure puppet
+write_files:
+  - content: |
+          *
+     path: /etc/puppet/autosign.conf
+     owner: root:root
+     permissions: '0644'
+# 
+  - content: |
+        package { 'apache2':
+          ensure => present,
+        }
+       path: /etc/puppet/manifests/site.pp
+       owner: root:root
+       permissions: '0644'
+# 
+# clean up
+final_message: 'The Puppet master is ready.'
+power_state:
+  mode: reboot
+  message: Rebooting
+  timeout: 30

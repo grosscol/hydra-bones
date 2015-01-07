@@ -1,0 +1,22 @@
+#cloud-config
+# 
+# add security patches and bug fixes
+package_update: true
+package_upgrade: true
+
+# install puppet
+packages:
+ - puppet
+# 
+# associate an IPv4 address with that puppet name 
+# be careful not to add another line after every reboot
+bootcmd:
+ - grep puppet /etc/hosts || echo 172.10.10.10 puppet >> /etc/hosts
+ - puppet agent --enable
+#
+# clean up
+final_message: 'The Puppet agent is ready.'
+power_state:
+  mode: reboot
+  message: Rebooting
+  timeout: 30
