@@ -213,7 +213,6 @@ module HydraBones
           :count => 1,
           :user_data => BST_USR_DATA
         })
-        bast.tag("Name", :value => BAST_NAME)
         
         # Create nat host
         nat = vpc.instances.create({
@@ -232,17 +231,19 @@ module HydraBones
           :count => 1,
           :user_data => NAT_USR_DATA
         })
-        nat.tag("Name", :value => NAT_NAME)
 
         # Poll for nat and bastion host to be running
         for i in 1..10 do
-          break if nat.status == :running && bast.status == :running
           sleep 13
+          break if nat.status == :running && bast.status == :running
         end
 
         if nat.status != :running || bast.status != :running
           raise MissingResourceError.new("NAT or Bastion host not running after 130 seconds.")
         end
+
+        bast.tag("Name", :value => BAST_NAME)
+        nat.tag("Name", :value => NAT_NAME)
 
         # Create route for private subnet through nat instance
         rt_prv = ec2.route_tables.create({:vpc => vpc.id})
