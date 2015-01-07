@@ -17,14 +17,9 @@ echo "Hostname: $(hostname)" | tee --append /home/admin/back.txt
 wget https://s3.amazonaws.com/grosscol-hydra-scripts/setup-deb-fedora.sh -O /home/admin/fedora-setup.sh
 wget https://s3.amazonaws.com/grosscol-hydra-scripts/setup-deb-solr.sh -O /home/admin/solr-setup.sh
 
-# Change permissions for scripts
+# Change permissions and ownership for scripts
 chmod +x /home/admin/*.sh
-
-# Change ownership for scripts
 chown -R admin:admin /home/admin/*.sh
-
-# Force use of backports repo for tomcat8. 
-apt-get -y -t wheezy-backports install tomcat8
 
 # Run setup script for fedora
 /home/admin/fedora-setup.sh
