@@ -2,9 +2,9 @@
 
 # Obtain required packages
 apt-get update
-apt-get install -y --no-install-recommends curl less openjdk-7-jre tomcat8 tomcat8-admin git
-# If you were going to build fedora4 also get the openjdk-jdk
-# apt-get install -y --no-install-recommends openjdk-7-jdk 
+apt-get install -y --no-install-recommends curl less openjdk-7-jdk git
+# Force use of backports repo for tomcat8. 
+apt-get -y -t wheezy-backports install tomcat8 tomcat8-admin 
 
 # Configure environment variables, and append to bash.rc
 
