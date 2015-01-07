@@ -3,7 +3,7 @@
 SOLR_MIRROR="http://psg.mtu.edu/pub/apache/lucene/solr"
 SOLR_VER="solr-4.10.2"
 SOLR_TAR_LOC="https://s3.amazonaws.com/cag-fed-deb/${SOLR_VER}.tgz"
-SOLR_HOME=/opt/solr/schemaless
+SOLR_HOME=/opt/solr/schemaless/solr
 SOLR_DATA=/opt/solr/schemaless/data
 
 # Obtain required packages
@@ -31,7 +31,7 @@ else
   exit 1
 fi
 
-# Copy the fedora war file to the default CATALINA_BASE directory
+# Copy the solr war file to the default CATALINA_BASE directory
 if [ -e /var/lib/tomcat8/webapps/solr.war ]
 then
   echo "solr.war already deployed to /var/lib/tomcat8/webapps/solr.war"
@@ -39,7 +39,7 @@ else
   cp /usr/local/solr/${SOLR_VER}/dist/${SOLR_VER}.war  /var/lib/tomcat8/webapps/solr.war
 fi
 
-# Modify the /etc/default/tomcat8 to have JAVA_OPTS include the fcrepo.home.
+# Modify the /etc/default/tomcat8 to have JAVA_OPTS include solr.solr.home.
 if [ `grep -c -e '-Dsolr.solr.home' < /etc/default/tomcat8` -gt 0 ]
 then
   echo "solr.solr.home option already appended to /etc/default/tomcat8"
@@ -48,7 +48,7 @@ else
   echo "JAVA_OPTS=\"\${JAVA_OPTS} -Dsolr.solr.home=${SOLR_HOME}\"" | tee --append /etc/default/tomcat8
 fi
 
-# Modify the /etc/default/tomcat8 to have JAVA_OPTS include the fcrepo.home.
+# Modify the /etc/default/tomcat8 to have JAVA_OPTS include solr.data.dir.
 if [ `grep -c -e '-Dsolr.data.dir' < /etc/default/tomcat8` -gt 0 ]
 then
   echo "solr.data.dir option already appended to /etc/default/tomcat8"
@@ -60,16 +60,16 @@ fi
 # Create solr home and data location
 mkdir -p ${SOLR_DATA}
 
+# Copy schemaless files from solr package over to /opt/solr/schemaless
+cp -r /usr/local/solr/${SOLR_VER}/example/example-schemaless/* /opt/solr/schemaless
+
 # Change ownership of solr dir to tomcat8
 chown -R tomcat8:tomcat8 ${SOLR_HOME}
-
-# Copy schemaless files from solr package over to SOLR_HOME
-cp -r /usr/local/solr/${SOLR_VER}/example/example-schemaless/* /opt/solr/schemaless
 
 # Copy required library jars to tomcat
 cp /usr/local/solr/${SOLR_VER}/example/lib/ext/* /usr/share/tomcat8/lib
 
-# Remove the log4j libraries,  because they prevent Fedora4 from working
+# Remove the log4j libraries, because they prevent Fedora4 from working.
 rm /usr/share/tomcat8/lib/log4j*.jar
 rm /usr/share/tomcat8/lib/slf4j-log4j*.jar
 
@@ -81,10 +81,10 @@ service tomcat8 restart
 
 # Check if solr is running
 echo "Checking if solr is up and running..."
-resp=`curl --write-out '%{http_code}\n' -s -o /dev/null http://localhost:8080/fcrepo/rest`
+resp=`curl --write-out '%{http_code}\n' -s -o /dev/null http://localhost:8080/solr`
 if [ ${resp} -eq 200 ]
 then
-  echo "Response code: ${resp}. Fedora repo is up and running."
+  echo "Response code: ${resp}. Solr is up and running."
 else
   echo "Response code: ${resp}."
 fi
