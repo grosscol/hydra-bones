@@ -478,6 +478,8 @@ module HydraBones
         end
 
         vpc = vpcs.create(VPC_CIDR)
+        # Pause briefly to avoid "vpc does not exist" error when applying name tag
+        sleep 3
         vpc.tag("Name", :value => VPC_NAME)
 
         return vpc
