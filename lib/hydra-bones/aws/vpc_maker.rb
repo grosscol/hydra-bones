@@ -234,12 +234,15 @@ module HydraBones
 
         # Poll for nat and bastion host to be running
         for i in 1..10 do
-          sleep 13
+          sleep 15
+          puts "Waiting for Bastion and NAT hosts to be running... #{i * 15}s elapsed."
           break if nat.status == :running && bast.status == :running
         end
 
         if nat.status != :running || bast.status != :running
           raise MissingResourceError.new("NAT or Bastion host not running after 130 seconds.")
+        else
+          puts "Bastion and NAT running."
         end
 
         bast.tag("Name", :value => BAST_NAME)
