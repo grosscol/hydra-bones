@@ -82,7 +82,7 @@ service tomcat8 restart
 
 # Check if solr is running
 echo "Checking if solr is up and running..."
-resp=`curl --write-out '%{http_code}\n' -s -o /dev/null http://localhost:8080/solr`
+resp=`curl --write-out '%{http_code}\n' -s -o /dev/null http://localhost:8080/solr/#`
 if [ ${resp} -eq 200 ]
 then
   echo "Response code: ${resp}. Solr is up and running."
