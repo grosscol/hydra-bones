@@ -59,6 +59,7 @@ fi
 
 # Create solr home and data location
 mkdir -p ${SOLR_DATA}
+chown -R tomcat8:tomcat8 ${SOLR_DATA}
 
 # Copy schemaless files from solr package over to /opt/solr/schemaless
 cp -r /usr/local/solr/${SOLR_VER}/example/example-schemaless/* /opt/solr/schemaless
