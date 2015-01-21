@@ -14,8 +14,8 @@ echo "Welcome to the Back Host." | tee /home/admin/back.txt
 echo "Hostname: $(hostname)" | tee --append /home/admin/back.txt
 
 # Grab setup scripts for solr and fedora
-wget https://s3.amazonaws.com/grosscol-hydra-scripts/setup-deb-fedora.sh -O /home/admin/fedora-setup.sh
-wget https://s3.amazonaws.com/grosscol-hydra-scripts/setup-deb-solr.sh -O /home/admin/solr-setup.sh
+wget https://s3.amazonaws.com/grosscol.hydra-scripts.bash/setup-deb-fedora.sh -O /home/admin/fedora-setup.sh
+wget https://s3.amazonaws.com/grosscol.hydra-scripts.bash/setup-deb-solr.sh -O /home/admin/solr-setup.sh
 
 # Change permissions and ownership for scripts
 chmod +x /home/admin/*.sh

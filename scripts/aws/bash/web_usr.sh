@@ -11,7 +11,7 @@ echo "Welcome to the Web Host." | tee /home/admin/web.txt
 echo "Hostname: $(hostname)" | tee --append /home/admin/web.txt
 
 # Grab setup scripts for torquebox3
-wget https://s3.amazonaws.com/grosscol-hydra-scripts/setup-deb-torque3.sh -O /home/admin/torque3-setup.sh
+wget https://s3.amazonaws.com/grosscol.hydra-scripts.bash/setup-deb-torque3.sh -O /home/admin/torque3-setup.sh
 
 # Change permissions and ownership for scripts
 chmod +x /home/admin/*.sh
