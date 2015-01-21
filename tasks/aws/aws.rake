@@ -4,19 +4,23 @@ namespace :aws do
 
   desc "Push scripts to s3 buckets and make public read only."
   task :push_scripts do
-    bucket_name = "#{ENV['USER']||ENV['USERNAME']}-hydra-scripts"
-    puts "Pushshing scripts to bucket: #{bucket_name}"
-
     s3 = AWS::S3.new
+    base_name = "#{ENV['USER']||ENV['USERNAME']}.hydra-scripts"
 
-    # Get the existing bucket or create one if not extant.
-    bucket = s3.buckets[bucket_name]
-    bucket = s3.buckets.create(bucket_name,{:acl => :public_read}) unless bucket.exists?
+    # For each dir in scripts/aws, create bucket and upload scripts.
+    dirs = Dir.glob('scripts/aws/*/')
+    dirs.each do |d|
+      bucket_name = "#{base_name}.#{File.basename(d)}"
+      bucket = s3.buckets[bucket_name]
+      bucket = s3.buckets.create(bucket_name,{:acl => :public_read}) unless bucket.exists?
+      puts "Pushshing scripts to bucket: #{bucket_name}"
 
-    # Push all scripts in scripts/aws to s3
-    Dir.glob('scripts/aws/*').each do |f|
-      puts "pushing: #{f}" 
-      bucket.objects[File.basename(f)].write(:file => f, :acl => :public_read)
+      Dir.entries(d).each do |f|
+        fpath = File.join(d,f)
+        next unless File.file? fpath
+        puts "  pushing: #{fpath}" 
+        bucket.objects[File.basename(fpath)].write(:file => fpath, :acl => :public_read)
+      end
     end
 
 
