@@ -27,10 +27,10 @@ module HydraBones
       # Alias curl-check for quick checks of http response codes.
       # Add hostname to /etc/hosts so sudo doesn't emit warnings.
       # output : { all : '| tee -a /var/log/cloud-init-output.log' }
-      BST_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/bast_usr.sh"
-      FED_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/back_usr.sh"
-      WEB_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/web_usr.sh" 
-      NAT_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol-hydra-scripts/nat_usr.sh"
+      BST_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol.hydra-scripts.bash/bast_usr.sh"
+      FED_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol.hydra-scripts.bash/back_usr.sh"
+      WEB_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol.hydra-scripts.bash/web_usr.sh" 
+      NAT_USR_DATA = "#include\nhttps://s3.amazonaws.com/grosscol.hydra-scripts.bash/nat_usr.sh"
 
       # Allocate vpc and resources that can be resolved without ec2 instances
       #
