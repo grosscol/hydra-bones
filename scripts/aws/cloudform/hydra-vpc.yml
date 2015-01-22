@@ -1,0 +1,63 @@
+{
+   "AWSTemplateFormatVersion" : "2010-09-09",
+   "Description" : "Cloud formation for basic UMich analog hydra stack.",
+   "Resources" : {
+      "hydra-vpc2" : {
+         "Type" : "AWS::EC2::VPC",
+         "Properties" : {
+            "CidrBlock" : "172.10.0.0/16",
+    	    "EnableDnsSupport" : "true",
+    	    "EnableDnsHostnames" : "true",
+            "InstanceTenancy" : "default",
+            "Tags" : [ {"Key" : "Name", "Value" : "hydra-vpc2"}, {"Key" : "CreatedUsing", "Value" : "CloudFormation"} ]
+         }
+      },
+      "dhcpOpts" : {
+        "Type" : "AWS::EC2::DHCPOptions",
+        "Properties" : {
+          "DomainName" : "ec2.internal",
+          "DomainNameServers" : [ "AmazonProvidedDNS" ],
+          "Tags" : [ {"Key" : "Name", "Value" : "dhcp-opts"} ]
+        }
+      },
+      "dchpAssoc" : {
+        "Type" : "AWS::EC2::VPCDHCPOptionsAssociation",
+        "Properties" : {
+          "DhcpOptionsID" : { "Ref" : "dhcpOpts" },
+          "VpcId" : { "Ref" : "hydra-vpc2" },
+          "Tags" : [ {"Key" : "Name", "Value" : "dhcp-asso"} ]
+        }
+      },
+      "prvnet" : {
+        "Type" : "AWS::EC2::Subnet",
+        "Properties" : {
+          "CidrBlock" : "172.10.10.0/24",
+          "VpcId" : { "Ref" : "hydra-vpc2" },
+          "Tags" : [ {"Key" : "Name", "Value" : "prvnet"} ]
+        }
+      },
+      "pubnet" : {
+        "Type" : "AWS::EC2::Subnet",
+        "Properties" : {
+          "CidrBlock" : "172.10.1.0/24",
+          "VpcId" : { "Ref" : "hydra-vpc2" },
+          "Tags" : [ {"Key" : "Name", "Value" : "pubnet"} ]
+        }
+      },
+      "hydra-gateway" : {
+        "Type" : "AWS::EC2::InternetGateway",
+        "Properties" : {
+          "Tags" : [ {"Key" : "Name", "Value" : "hydra-gateway"} ]
+        }
+      },
+      "gateway-attach" : {
+        "Type" : "AWS::EC2::VPCGatewayAttachment",
+        "Properties" : {
+          "InternetGatewayId" : { "Ref" : "hydra-gateway" },
+          "VpcId" : { "Ref" : "hydra-vpc2" },
+          "Tags" : [ {"Key" : "Name", "Value" : "attachment"} ]
+        }
+      }
+        
+   }
+} 
