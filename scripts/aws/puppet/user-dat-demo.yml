@@ -1,0 +1,5 @@
+#cloud-config
+puppet:
+  conf:
+  agent:
+  server: "puppetmaster.example.org"
