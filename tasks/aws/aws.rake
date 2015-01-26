@@ -17,7 +17,9 @@ namespace :aws do
 
       Dir.entries(d).each do |f|
         fpath = File.join(d,f)
-        next unless File.file? fpath
+        if f[0] == '.' || !File.file?( fpath )
+          next
+        end
         puts "  pushing: #{fpath}" 
         bucket.objects[File.basename(fpath)].write(:file => fpath, :acl => :public_read)
       end
