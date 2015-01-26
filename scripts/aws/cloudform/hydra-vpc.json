@@ -1,6 +1,6 @@
 {
    "AWSTemplateFormatVersion" : "2010-09-09",
-   "Description" : "Cloud formation for basic UMich analog hydra stack.",
+   "Description" : "Cloud formation for basic analog of UMich library hydra stack.",
    "Resources" : {
       "hydravpc2" : {
          "Type" : "AWS::EC2::VPC",
@@ -55,7 +55,171 @@
           "InternetGatewayId" : { "Ref" : "hydraGateway" },
           "VpcId" : { "Ref" : "hydravpc2" }
         }
+      },
+      "pubRTable" : {
+        "Type" : "AWS::EC2::RouteTable",
+        "Properties" : {
+          "VpcId" : { "Ref" : "hydravpc2" },
+          "Tags" : [{ "Key" : "Name", "Value" : "pub_rtable" }]
+        }
+      },
+      "pubroute" : {
+        "Type" : "AWS::EC2::Route",
+        "Properties" : {
+          "DestinationCidrBlock" : "0.0.0.0/0",
+          "GatewayId" : { "Ref" : "hydraGateway" },
+          "RouteTableId" : { "Ref" : "pubRTable" }
+        }
+      },
+      "pubTableAssoc" : {
+        "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties" : {
+          "RouteTableId" : { "Ref" : "pubRTable" },
+          "SubnetId" : { "Ref" : "pubnet" }
+        }
+      },
+
+
+      "bastSecGp" : {
+        "Type" : "AWS::EC2::SecurityGroup",
+        "Properties" : {
+          "GroupDescription" : "Bastion host security group",
+          "SecurityGroupEgress" : [
+            { "IpProtocol" : "tcp", "FromPort" : 22, "ToPort" : 22, "CidrIp" : "0.0.0.0/0"},
+            { "IpProtocol" : "tcp", "FromPort" : 443, "ToPort" : 443, "CidrIp" : "0.0.0.0/0" }
+          ],
+          "SecurityGroupIngress" : [
+            { "IpProtocol" : "tcp", "FromPort" : 22, "ToPort" : 22, "CidrIp" : "0.0.0.0/0"},
+            { "IpProtocol" : "tcp", "FromPort" : 443, "ToPort" : 443, "CidrIp" : "0.0.0.0/0" }
+          ],
+          "Tags" : [{ "Key" : "Name", "Value" : "bast_sec" }],
+          "VpcId" : { "Ref" : "hydravpc2" }
+        }
+      },
+
+      "natSecGp" : {
+        "Type" : "AWS::EC2::SecurityGroup",
+        "Properties" : {
+          "GroupDescription" : "NAT instance security group",
+          "SecurityGroupEgress" : [
+            { "IpProtocol" : "tcp", "FromPort" : 22, "ToPort" : 22, "DestinationSecurityGroupId" : {"Ref":"bastSecGp"}},
+            { "IpProtocol" : "tcp", "FromPort" : 80, "ToPort" : 80, "CidrIp" : "0.0.0.0/0" },
+            { "IpProtocol" : "tcp", "FromPort" : 8080, "ToPort" : 8080, "CidrIp" : "0.0.0.0/0" },
+            { "IpProtocol" : "tcp", "FromPort" : 443, "ToPort" : 443, "CidrIp" : "0.0.0.0/0" }
+          ],
+          "SecurityGroupIngress" : [
+            { "IpProtocol" : "tcp", "FromPort" : 22, "ToPort" : 22, "SourceSecurityGroupId" : {"Ref":"bastSecGp" }},
+            { "IpProtocol" : "tcp", "FromPort" : 80, "ToPort" : 80, "CidrIp" : "0.0.0.0/0" },
+            { "IpProtocol" : "tcp", "FromPort" : 8080, "ToPort" : 8080, "CidrIp" : "0.0.0.0/0" },
+            { "IpProtocol" : "tcp", "FromPort" : 443, "ToPort" : 443, "CidrIp" : "0.0.0.0/0" }
+          ],
+          "Tags" : [{ "Key" : "Name", "Value" : "nat_sec" }],
+          "VpcId" : { "Ref" : "hydravpc2" }
+        }
+      },
+      "backSecGp" : {
+        "Type" : "AWS::EC2::SecurityGroup",
+        "Properties" : {
+          "GroupDescription" : "Back end host security group",
+          "SecurityGroupEgress" : [
+            { "IpProtocol" : "tcp", "FromPort" : 22, "ToPort" : 22, "DestinationSecurityGroupId" : {"Ref":"bastSecGp"} },
+            { "IpProtocol" : "tcp", "FromPort" : 80, "ToPort" : 80, "CidrIp" : "0.0.0.0/0" },
+            { "IpProtocol" : "tcp", "FromPort" : 8080, "ToPort" : 8080, "DestinationSecurityGroupId" : {"Ref":"webSecGp"} },
+            { "IpProtocol" : "tcp", "FromPort" : 8080, "ToPort" : 8080, "DestinationSecurityGroupId" : {"Ref":"natSecGp"} },
+            { "IpProtocol" : "tcp", "FromPort" : 443, "ToPort" : 443, "CidrIp" : "0.0.0.0/0" }
+          ],
+          "SecurityGroupIngress" : [
+            { "IpProtocol" : "tcp", "FromPort" : 22, "ToPort" : 22, "SourceSecurityGroupId" : {"Ref":"bastSecGp" } },
+            { "IpProtocol" : "tcp", "FromPort" : 80, "ToPort" : 80, "SourceSecurityGroupId" : {"Ref":"natSecGp" } },
+            { "IpProtocol" : "tcp", "FromPort" : 8080, "ToPort" : 8080, "SourceSecurityGroupId" : {"Ref":"natSecGp" } },
+            { "IpProtocol" : "tcp", "FromPort" : 8080, "ToPort" : 8080, "SourceSecurityGroupId" : {"Ref":"webSecGp" } },
+            { "IpProtocol" : "tcp", "FromPort" : 443, "ToPort" : 443, "SourceSecurityGroupId" : {"Ref":"natSecGp" } }
+          ],
+          "Tags" : [{ "Key" : "Name", "Value" : "back_sec" }],
+          "VpcId" : { "Ref" : "hydravpc2" }
+        }
+      },
+      "webSecGp" : {
+        "Type" : "AWS::EC2::SecurityGroup",
+        "Properties" : {
+          "GroupDescription" : "Front end host security group",
+          "SecurityGroupEgress" : [
+            { "IpProtocol" : "tcp", "FromPort" : 22, "ToPort" : 22, "DestinationSecurityGroupId" : {"Ref":"bastSecGp"}},
+            { "IpProtocol" : "tcp", "FromPort" : 80, "ToPort" : 80, "CidrIp" : "0.0.0.0/0" },
+            { "IpProtocol" : "tcp", "FromPort" : 8080, "ToPort" : 8080, "CidrIp" : "0.0.0.0/0" },
+            { "IpProtocol" : "tcp", "FromPort" : 443, "ToPort" : 443, "CidrIp" : "0.0.0.0/0" }
+          ],
+          "SecurityGroupIngress" : [
+            { "IpProtocol" : "tcp", "FromPort" : 22, "ToPort" : 22, "SourceSecurityGroupId" : {"Ref":"bastSecGp" }},
+            { "IpProtocol" : "tcp", "FromPort" : 80, "ToPort" : 80, "CidrIp" : "0.0.0.0/0" },
+            { "IpProtocol" : "tcp", "FromPort" : 8080, "ToPort" : 8080, "CidrIp" : "0.0.0.0/0" },
+            { "IpProtocol" : "tcp", "FromPort" : 443, "ToPort" : 443, "CidrIp" : "0.0.0.0/0" }
+          ],
+          "Tags" : [{ "Key" : "Name", "Value" : "web_sec" }],
+          "VpcId" : { "Ref" : "hydravpc2" }
+        }
+      },
+
+      "bastHost" : {
+        "Type" : "AWS::EC2::Instance",
+        "Properties" : {
+          "ImageId" : "ami-b66ed3de",
+          "InstanceType" : "t2.micro",
+          "KeyName" : "bast_key",
+          "SecurityGroupIds" : [{"Ref":"bastSecGp"}],
+          "SubnetId" : {"Ref" : "pubnet"},
+          "Tags" : [{"Key" : "Name", "Value" : "bastion_host"}],
+          "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", ["#include\nhttps://s3.amazonaws.com/grosscol.hydra-scripts.bash/bast_usr.sh"]]}},
+          "Tenancy" : "default"
+        }
+      },
+      "bastEIP" : {
+        "Type" : "AWS::EC2::EIP",
+        "Properties" : {
+          "Domain" : "vpc",
+          "InstanceId" : {"Ref":"bastHost"}
+        },
+        "DependsOn" : "hydraGateway"
+      },
+
+      "natHost" : {
+        "Type" : "AWS::EC2::Instance",
+        "Properties" : {
+          "ImageId" : "ami-b66ed3de",
+          "InstanceType" : "t2.micro",
+          "KeyName" : "hydra_key",
+          "SecurityGroupIds" : [{"Ref":"natSecGp"}],
+          "SubnetId" : {"Ref" : "pubnet"},
+          "SourceDestCheck" : false,
+          "Tags" : [{"Key" : "Name", "Value" : "nat_host"}],
+          "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", ["#include\nhttps://s3.amazonaws.com/grosscol.hydra-scripts.bash/nat_usr.sh"]]}},
+          "Tenancy" : "default"
+        }
+      }
+
+      "prvRTable" : {
+        "Type" : "AWS::EC2::RouteTable",
+        "Properties" : {
+          "VpcId" : { "Ref" : "hydravpc2" },
+          "Tags" : [{ "Key" : "Name", "Value" : "prv_rtable" }]
+        }
+      },
+      "prvroute" : {
+        "Type" : "AWS::EC2::Route",
+        "Properties" : {
+          "DestinationCidrBlock" : "0.0.0.0/0",
+          "InstanceId" : { "Ref" : "natHost" },
+          "RouteTableId" : { "Ref" : "prvRTable" }
+        }
+      },
+      "prvTableAssoc" : {
+        "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties" : {
+          "RouteTableId" : { "Ref" : "prvRTable" },
+          "SubnetId" : { "Ref" : "prvnet" }
+        }
       }
         
+
    }
 } 
