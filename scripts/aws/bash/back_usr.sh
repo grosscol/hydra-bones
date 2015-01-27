@@ -1,4 +1,5 @@
 #!/bin/sh
+echo -e "Welcome to Back Host" | tee /home/admin/back.txt
 # Log the output of this script
 
 # Update apt reposisotyr data.  Install curl and alias a useful curl shortcut.
