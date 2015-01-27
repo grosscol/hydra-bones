@@ -195,7 +195,7 @@
           "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", ["#include\nhttps://s3.amazonaws.com/grosscol.hydra-scripts.bash/nat_usr.sh"]]}},
           "Tenancy" : "default"
         }
-      }
+      },
 
       "prvRTable" : {
         "Type" : "AWS::EC2::RouteTable",
@@ -210,13 +210,27 @@
           "DestinationCidrBlock" : "0.0.0.0/0",
           "InstanceId" : { "Ref" : "natHost" },
           "RouteTableId" : { "Ref" : "prvRTable" }
-        }
+        },
+        "DependsOn" : "natHost"
       },
       "prvTableAssoc" : {
         "Type" : "AWS::EC2::SubnetRouteTableAssociation",
         "Properties" : {
           "RouteTableId" : { "Ref" : "prvRTable" },
           "SubnetId" : { "Ref" : "prvnet" }
+        }
+      },
+
+      "backHost" : {
+        "Type" : "AWS::EC2::Instance",
+        "Properties" : {
+          "ImageId" : "ami-a458e2cc",
+          "InstanceType" : "t2.medium",
+          "KeyName" : "hydra_key",
+          "SecurityGroupIds" : [{"Ref":"backSecGp"}],
+          "SubnetId" : {"Ref" : "prvnet"},
+          "Tags" : [{"Key" : "Name", "Value" : "back_host"}],
+          "Tenancy" : "default"
         }
       }
         
