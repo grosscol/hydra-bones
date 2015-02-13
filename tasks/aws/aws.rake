@@ -24,8 +24,33 @@ namespace :aws do
         bucket.objects[File.basename(fpath)].write(:file => fpath, :acl => :public_read)
       end
     end
-
-
   end
+
+  desc "Start hydra stack using cloud formation template and scripts in s3."
+  task :form_cloud do
+    base_name  = "#{ENV['USER']||ENV['USERNAME']}.hydra-scripts"
+    template = AWS::S3.new.buckets["#{base_name}.cloudform"].objects["hydra-vpc.json"]
+    cfm = AWS::CloudFormation.new
+    stack = cfm.stacks.create('hydra', template, {:capabilities => "CAPABILITY_IAM"} )
+
+    sleep 5
+    puts "Cost estimate: #{stack.estimate_template_cost}"
+
+    for i in 1..10 do
+      sleep 30
+      puts "Status:  #{stack.status}"
+      puts "Message: #{stack.status_reason}" 
+    end
+  end
+
+  desc "Test local template"
+  task :temple_test do
+    cfm = AWS::CloudFormation.new
+    hsh = cfm.validate_template(File.read("scripts/aws/cloudform/hydra-vpc.json"))
+
+    hsh.each_pair{|k,v| puts "#{k}: #{v}"}
+  end
+ 
+
 
 end
