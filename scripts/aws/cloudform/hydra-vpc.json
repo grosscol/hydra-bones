@@ -202,15 +202,109 @@
         "Type" : "AWS::EC2::Instance",
         "Properties" : {
           "ImageId" : "ami-b66ed3de",
-          "InstanceType" : "t2.micro",
+          "InstanceType" : "t2.small",
           "KeyName" : "bast_key",
           "SecurityGroupIds" : [{"Ref":"bastSecGp"}],
           "SubnetId" : {"Ref" : "pubnet"},
           "Tags" : [{"Key" : "Name", "Value" : "bastion_host"}],
           "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", ["#include\nhttps://s3.amazonaws.com/grosscol.hydra-scripts.bash/bast_usr.sh"]]}},
           "Tenancy" : "default"
+        },
+        "Metadata": {
+          "AWS::CloudFormation::Init" : {
+            "config" : {
+              "packages" : {
+                "yum" : {
+                  "puppet"        : [],
+                  "puppet-server" : [],
+                  "ruby-devel"    : [],
+                  "gcc"           : [],
+                  "make"          : [],
+                  "rubygems"      : []
+                },
+                "rubygems" : {
+                  "json"          : []
+                }
+              },
+              "files" : {
+                "/etc/yum.repos.d/epel.repo" : {
+                  "source" : "https://s3.amazonaws.com/cloudformation-examples/enable-epel-on-amazon-linux-ami",
+                  "mode"   : "000644",
+                  "owner"  : "root",
+                  "group"  : "root"
+                },
+                "/etc/puppet/autosign.conf" : {
+                  "content" : "*.internal\n",
+                  "mode"    : "100644",
+                  "owner"   : "root",
+                  "group"   : "wheel"
+                },
+                "/etc/puppet/fileserver.conf" : {
+                  "content" : "[modules]\n   allow *.internal\n",
+                  "mode"    : "100644",
+                  "owner"   : "root",
+                  "group"   : "wheel"
+                },
+                "/etc/puppet/puppet.conf" : {
+                  "content" : { "Fn::Join" : ["", [
+                    "[main]\n",
+                    "   logdir=/var/log/puppet\n",
+                    "   rundir=/var/run/puppet\n",
+                    "   ssldir=$vardir/ssl\n",
+                    "   pluginsync=true\n",
+                    "[agent]\n",
+                    "   classfile=$vardir/classes.txt\n",
+                    "   localconfig=$vardir/localconfig\n"]] },
+                    "mode"    : "000644",
+                    "owner"   : "root",
+                    "group"   : "root"
+                },
+                "/etc/puppet/modules/cfn/manifests/init.pp" : {
+                  "content" : "class cfn {}",
+                  "mode"    : "100644",
+                  "owner"   : "root",
+                  "group"   : "wheel"
+                },
+                "/etc/puppet/modules/cfn/lib/facter/cfn.rb" : {
+                  "source"  : "https://s3.amazonaws.com/cloudformation-examples/cfn-facter-plugin.rb",
+                  "mode"    : "100644",
+                  "owner"   : "root",
+                  "group"   : "wheel"
+                },
+                "/etc/puppet/manifests/nodes.pp" : {
+                  "content" : {"Fn::Join" : ["", [
+                    "node basenode {\n",
+                      "  include cfn\n",
+                      "}\n",
+                      "node /^.*internal$/ inherits basenode {\n",
+                        "  case $cfn_roles {\n",
+                          "    ", "base", "\n",
+                          "  }\n",
+                          "}\n"]]},
+                          "mode"    : "100644",
+                          "owner"   : "root",
+                          "group"   : "wheel"
+                },
+                "/etc/puppet/manifests/site.pp" : {
+                  "content" : "import \"nodes\"\n",
+                  "mode"    : "100644",
+                  "owner"   : "root",
+                  "group"   : "wheel"
+                }
+              },
+              "services" : {
+                "sysvinit" : {
+                  "puppetmaster" : {
+                    "enabled" : "true",
+                    "ensureRunning" : "true"
+                  }
+                }
+              }
+            }
+          }
         }
       },
+
       "bastEIP" : {
         "Type" : "AWS::EC2::EIP",
         "Properties" : {
@@ -288,7 +382,8 @@
           },
           "Tenancy" : "default"
         },
-        "DependsOn" : "prvroute"
+        "DependsOn" : "prvroute",
+        "Metadata" : { "PuppetIp": { "Fn::GetAtt": ["bastHost","PrivateIp"] } }
       }
         
 
