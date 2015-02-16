@@ -30,8 +30,10 @@ namespace :aws do
   task :form_cloud do
     base_name  = "#{ENV['USER']||ENV['USERNAME']}.hydra-scripts"
     template = AWS::S3.new.buckets["#{base_name}.cloudform"].objects["hydra-vpc.json"]
+
+    puts "Forming stack from: #{template}"
     cfm = AWS::CloudFormation.new
-    stack = cfm.stacks.create('hydra', template, {:capabilities => "CAPABILITY_IAM"} )
+    stack = cfm.stacks.create('hydra', template, :capabilities => ["CAPABILITY_IAM"] )
 
     sleep 5
     puts "Cost estimate: #{stack.estimate_template_cost}"
@@ -40,10 +42,11 @@ namespace :aws do
       sleep 30
       puts "Status:  #{stack.status}"
       puts "Message: #{stack.status_reason}" 
+      if stack.status == "CREATE_COMPLETE" then break end
     end
   end
 
-  desc "Test local template"
+  desc "Validate local template"
   task :temple_test do
     cfm = AWS::CloudFormation.new
     hsh = cfm.validate_template(File.read("scripts/aws/cloudform/hydra-vpc.json"))
