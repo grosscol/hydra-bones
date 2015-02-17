@@ -1,5 +1,5 @@
 #!/bin/sh
-echo -e "Welcome to NAT Host" | tee /home/ec2-user/nat.txt
+touch /home/ec2-user/welcome.to.nat_host
 echo 1 > /proc/sys/net/ipv4/ip_forward
 echo 0 > /proc/sys/net/ipv4/conf/eth0/send_redirects
 /sbin/iptables -t nat -A POSTROUTING -o eth0 -s 0.0.0.0/0 -j MASQUERADE

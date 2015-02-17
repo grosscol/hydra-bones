@@ -150,7 +150,6 @@
         "Properties" : {
           "GroupDescription" : "NAT instance security group",
           "SecurityGroupEgress" : [
-            { "IpProtocol" : "tcp", "FromPort" : 22, "ToPort" : 22, "DestinationSecurityGroupId" : {"Ref":"bastSecGp"}},
             { "IpProtocol" : "tcp", "FromPort" : 80, "ToPort" : 80, "CidrIp" : "0.0.0.0/0" },
             { "IpProtocol" : "tcp", "FromPort" : 8080, "ToPort" : 8080, "CidrIp" : "0.0.0.0/0" },
             { "IpProtocol" : "tcp", "FromPort" : 443, "ToPort" : 443, "CidrIp" : "0.0.0.0/0" }
@@ -217,7 +216,12 @@
           "SecurityGroupIds" : [{"Ref":"bastSecGp"}, {"Ref":"puppetSecGp"}],
           "SubnetId" : {"Ref" : "pubnet"},
           "Tags" : [{"Key" : "Name", "Value" : "bastion_host"}],
-          "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", ["#include\nhttps://s3.amazonaws.com/grosscol.hydra-scripts.bash/bast_usr.sh"]]}},
+          "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", 
+            [
+              "#!/bin/sh","\n",
+              "touch /home/ec2-user/bastion.txt"
+            ]
+          ]}},
           "Tenancy" : "default"
         },
         "Metadata": {
@@ -334,7 +338,22 @@
           "SubnetId" : {"Ref" : "pubnet"},
           "SourceDestCheck" : false,
           "Tags" : [{"Key" : "Name", "Value" : "nat_host"}],
-          "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", ["#include\nhttps://s3.amazonaws.com/grosscol.hydra-scripts.bash/nat_usr.sh"]]}},
+          "UserData" : { "Fn::Base64" : { "Fn::Join" : ["",
+             [
+              "#!/bin/sh","\n",
+              "touch /home/ec2-user/welcome.to.nat","\n",
+              "echo 1 > /proc/sys/net/ipv4/ip_forward","\n",
+              "echo 0 > /proc/sys/net/ipv4/conf/eth0/send_redirects","\n",
+              "/sbin/iptables -t nat -A POSTROUTING -o eth0 -s 0.0.0.0/0 -j MASQUERADE","\n",
+              "/sbin/iptables-save > /etc/sysconfig/iptables","\n",
+              "mkdir -p /etc/sysctl.d/","\n",
+              "cat <<EOF > /etc/sysctl.d/nat.conf","\n",
+              "net.ipv4.ip_forward = 1","\n",
+              "net.ipv4.conf.eth0.send_redirects = 0","\n",
+              "EOF","\n",
+              "yum update -y","\n"
+             ]
+           ]}},
           "Tenancy" : "default"
         }
       },
@@ -385,7 +404,30 @@
             "Fn::Base64": { "Fn::Join": [ "",
                 [
                 "Bastion=", {"Fn::GetAtt" : [ "bastHost" , "PrivateIp"]}, "\n",
-                "#include\nhttps://s3.amazonaws.com/grosscol.hydra-scripts.bash/back_usr.sh"
+                "#cloud-config","\n",
+                "#Enable PuppetLabs repos (for latest version of puppet)","\n",
+                "","\n",
+                "apt_preserve_source_list: true","\n",
+                "# Configure additional apt sources","\n",
+                "apt_sources:","\n",
+                "  - source: deb http://apt.puppetlabs.com $RELEASE main dependencies","\n",
+                "    keyid: 4BD6EC30    # GPG key ID published on a key server","\n",
+                "    filename: puppetlabs.list","\n",
+                "  - source: deb-src http://apt.puppetlabs.com $RELEASE main dependencies","\n",
+                "    keyid: 4BD6EC30    # GPG key ID published on a key server","\n",
+                "    filename: puppetlabs.list","\n",
+                "","\n",
+                "packages:","\n",
+                "  - wget","\n",
+                "  - curl","\n",
+                "  - puppet","\n",
+                "  - rubygems","\n",
+                "  - python-pip","\n",
+                "","\n",
+                "runcmd:","\n",
+                "  - pip install awscli","\n",
+                "","\n",
+                "output: {all: \">> /var/log/cloud-init-output.log\"}","\n"
                 ]
               ]
             }
