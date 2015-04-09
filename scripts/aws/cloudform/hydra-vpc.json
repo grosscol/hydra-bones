@@ -403,7 +403,6 @@
           "UserData" : {
             "Fn::Base64": { "Fn::Join": [ "",
                 [
-                "Bastion=", {"Fn::GetAtt" : [ "bastHost" , "PrivateIp"]}, "\n",
                 "#cloud-config","\n",
                 "#Enable PuppetLabs repos (for latest version of puppet)","\n",
                 "","\n",
