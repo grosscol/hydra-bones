@@ -1,0 +1,26 @@
+#cloud-config
+#Enable PuppetLabs repos (for latest version of puppet)
+
+output: {all: ">> /var/log/cloud-init-output-cst.log"}
+
+apt_preserve_source_list: true
+# Configure additional apt sources
+apt_sources:
+  - source: deb http://apt.puppetlabs.com $RELEASE main dependencies
+    keyid: 4BD6EC30    # GPG key ID published on a key server
+    filename: puppetlabs.list
+  - source: deb-src http://apt.puppetlabs.com $RELEASE main dependencies
+    keyid: 4BD6EC30    # GPG key ID published on a key server
+    filename: puppetlabs.list
+
+packages:
+  - wget
+  - curl
+  - less
+  - python-pip
+
+runcmd:
+  - pip install awscli
+
+
+
